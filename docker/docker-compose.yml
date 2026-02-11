@@ -2,12 +2,14 @@ services:
   auth-db:
     image: "postgres:16-alpine"
     container_name: auth-service-db
+    env_file:
+      - ../env/.env.auth.dev
     environment:
-      - "POSTGRES_DB=authdb"
-      - "POSTGRES_PASSWORD=password"
-      - "POSTGRES_USER=postgres"
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_USER=${DB_USER}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     networks:
       - travel-network
 
