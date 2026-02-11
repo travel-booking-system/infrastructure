@@ -1,0 +1,16 @@
+services:
+  auth-db:
+    image: "postgres:16-alpine"
+    container_name: auth-service-db
+    environment:
+      - "POSTGRES_DB=authdb"
+      - "POSTGRES_PASSWORD=password"
+      - "POSTGRES_USER=postgres"
+    ports:
+      - "5432:5432"
+    networks:
+      - travel-network
+
+networks:
+  travel-network:
+    driver: bridge
