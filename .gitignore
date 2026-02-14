@@ -1,0 +1,8 @@
+# Ignore everything inside the env folder by default
+env/*
+
+# Allow the .gitignore file itself 
+!env/.gitignore
+
+# Whitelist only the template/example files
+!env/*.example
