@@ -1,8 +1,52 @@
-# Ignore everything inside the env folder by default
-env/*
+# =========================
+# OS / IDE
+# =========================
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
 
-# Allow the .gitignore file itself 
-!env/.gitignore
-
-# Whitelist only the template/example files
+# =========================
+# Environment files
+# =========================
+env/*.env
+env/*.local
+env/*.override
 !env/*.example
+
+# =========================
+# Secrets (NEVER COMMIT)
+# =========================
+secrets/
+docker/secrets/
+**/secrets/*
+*.key
+*.pem
+*.crt
+*.p12
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+docker-logs/
+
+# =========================
+# Temporary / cache
+# =========================
+tmp/
+.cache/
+*.swp
+
+# =========================
+# Docker overrides (local only)
+# =========================
+docker-compose.override.yml
+
+# =========================
+# Test artifacts
+# =========================
+target/
+build/

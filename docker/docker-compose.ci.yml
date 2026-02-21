@@ -1,0 +1,7 @@
+services:
+  api-gateway:
+    image: ghcr.io/travel-booking-system/api-gateway:{IMAGE_TAG:-latest}
+
+  auth-service:
+    image: ghcr.io/travel-booking-system/auth-service:{IMAGE_TAG:-latest}
+
