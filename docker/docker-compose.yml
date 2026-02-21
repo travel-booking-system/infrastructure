@@ -32,7 +32,7 @@ services:
       SPRING_PROFILES_ACTIVE: ${AUTH_SERVICE_PROFILE}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-auth:5432/${AUTH_DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USER}
-      SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/auth_db_password
+      # SPRING_DATASOURCE_PASSWORD: ${auth_db_password}
     secrets:
       - auth_db_password  
     depends_on:
