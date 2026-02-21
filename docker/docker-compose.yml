@@ -1,47 +1,100 @@
-version: "3.9"
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
 
 services:
-  postgres-auth:
-    image: postgres:15
-    container_name: postgres-auth
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    ports:
-      - "5433:5432"
-    networks:
-      - travel-network
-
   api-gateway:
-    build:
-      context: ../../api-gateway
-    container_name: api-gateway
-    depends_on:
-      - auth-service
-    ports:
-      - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_PROFILES_ACTIVE: ${GATEWAY_PROFILE}
+    depends_on:
+      auth-service:
+        condition: service_started
     networks:
-      - travel-network  
+      - messenger-nw
+    logging: *default-logging  
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 768M
+        reservations:
+          memory: 384M
+
 
   auth-service:
-    build:
-      context: ../../auth-service
-    container_name: auth-service
-    depends_on:
-      - postgres-auth
-    ports:
-      - "8081:8081"
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_PROFILES_ACTIVE: ${AUTH_SERVICE_PROFILE}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-auth:5432/${AUTH_DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${AUTH_DB_USER}
+      SPRING_DATASOURCE_PASSWORD_FILE: /run/secrets/auth_db_password
+    secrets:
+      - auth_db_password  
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
     networks:
-      - travel-network
+      - messenger-nw
+      - auth-db-nw
+    logging: *default-logging  
+    deploy:
+      restart_policy:
+        condition: on-failure
+        max_attempts: 3
+        window: 120s
+      resources:
+        limits:
+          cpus: '0.75'
+          memory: 768M
+        reservations:
+          memory: 384M
+
+  postgres-auth:
+    image: postgres:17.4-bookworm
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD_FILE: /run/secrets/auth_db_password
+    secrets:
+      - auth_db_password  
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - auth-db-nw
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data     
+    logging: *default-logging  
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 10s
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 256M
+
+secrets:
+  auth_db_password:
+    file: ../secrets/auth-service/db_password.txt
+
+volumes:
+  postgres_auth_data:            
 
 networks:
-  travel-network:
+  # The "Backbone": Common ground for all services
+  messenger-nw:
     driver: bridge
+  # Private: One per service-database pair
+  auth-db-nw:
+    internal: true # No internet access allowed
